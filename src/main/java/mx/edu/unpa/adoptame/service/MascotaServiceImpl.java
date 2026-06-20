@@ -42,7 +42,7 @@ public class MascotaServiceImpl implements MascotaService{
 	@Transactional(readOnly=true)
 	public Optional<Mascota> findByName(String nombre) {
 		// TODO Auto-generated method stub
-		return mascotaRepository.findByNombreIgnoreCase(nombre.trim());
+		return mascotaRepository.findFirstByNombreIgnoreCaseOrderByIdMascotaAsc(nombre.trim());
 	}
 
 	@Override
@@ -73,8 +73,20 @@ public class MascotaServiceImpl implements MascotaService{
 	}
 
 	@Override
+	@Transactional(readOnly = true)
+	public Iterable<Mascota> findByUsuarioId(Integer idUsuario) {
+		if (idUsuario == null || idUsuario <= 0) {
+			throw new IllegalArgumentException("idUsuario inválido");
+		}
+		return mascotaRepository.findByUsuarioDonadorWithDetails(idUsuario);
+	}
+
+	@Override
 	@Transactional
-	public Mascota updateEstadoAdopcion(Integer idMascota, String estadoAdopcion) {
+	public Mascota updateEstadoAdopcion(Integer idMascota, String estadoAdopcion, Integer idUsuario) {
+		if (idUsuario == null || idUsuario <= 0) {
+			throw new IllegalArgumentException("Debe enviar idUsuario");
+		}
 		if (estadoAdopcion == null || estadoAdopcion.isBlank()) {
 			throw new IllegalArgumentException("Debe enviar estadoAdopcion");
 		}
@@ -83,6 +95,11 @@ public class MascotaServiceImpl implements MascotaService{
 			log.warn("Mascota no encontrada: idMascota={}", idMascota);
 			return new IllegalArgumentException("Mascota no encontrada: " + idMascota);
 		});
+		Integer ownerId = mascota.getIdUsuarioDonador();
+		if (ownerId == null || !ownerId.equals(idUsuario)) {
+			log.warn("Usuario {} intentó cambiar estado de mascota {} sin ser dueño", idUsuario, idMascota);
+			throw new IllegalStateException("Solo el dueño puede cambiar el estado de adopción");
+		}
 		mascota.setEstadoAdopcion(normalized);
 		return mascotaRepository.save(mascota);
 	}

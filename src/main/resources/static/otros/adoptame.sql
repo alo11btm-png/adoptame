@@ -77,6 +77,29 @@ CREATE TABLE ImagenMascota (
 );
 
 -- =========================================
+-- TABLA: SolicitudAdopcion
+-- =========================================
+CREATE TABLE SolicitudAdopcion (
+    idSolicitud INT AUTO_INCREMENT PRIMARY KEY,
+    idMascota INT NOT NULL,
+    idUsuarioSolicitante INT NOT NULL,
+    estado ENUM('Pendiente', 'Aprobada', 'Rechazada') DEFAULT 'Pendiente',
+    fechaSolicitud DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_solicitud_mascota
+        FOREIGN KEY (idMascota)
+        REFERENCES Mascota(idMascota)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_solicitud_usuario
+        FOREIGN KEY (idUsuarioSolicitante)
+        REFERENCES Usuario(idUsuario)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+-- =========================================
 -- Usuario y gatos de ejemplo
 -- =========================================
 INSERT INTO Usuario (nombre, apellidoPaterno, email, password, activo)

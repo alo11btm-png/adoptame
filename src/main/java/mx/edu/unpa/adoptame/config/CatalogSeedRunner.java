@@ -66,7 +66,7 @@ public class CatalogSeedRunner implements ApplicationRunner {
 
 		int creados = 0;
 		for (CatalogPet spec : CATALOG) {
-			Optional<Mascota> existing = mascotaRepository.findByNombreIgnoreCase(spec.nombre());
+			Optional<Mascota> existing = mascotaRepository.findFirstByNombreIgnoreCaseOrderByIdMascotaAsc(spec.nombre());
 			if (existing.isPresent()) {
 				seedCatalogImagesIfMissing(existing.get(), spec.nombre());
 				continue;

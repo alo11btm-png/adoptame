@@ -34,6 +34,15 @@ public class MascotaController {
 		return mascotaService.findAll();
 	}
 
+	@GetMapping("/usuario/{idUsuario}")
+	public ResponseEntity<Iterable<Mascota>> queryByUsuario(@PathVariable("idUsuario") Integer idUsuario) {
+		try {
+			return ResponseEntity.ok(mascotaService.findByUsuarioId(idUsuario));
+		} catch (IllegalArgumentException ex) {
+			return ResponseEntity.badRequest().build();
+		}
+	}
+
 	@GetMapping("/{idMascota}")
 	public ResponseEntity<Mascota> queryById(@PathVariable(value = "idMascota") Integer id) {
 		Optional<Mascota> oMascota = mascotaService.findById(id);
@@ -65,14 +74,27 @@ public class MascotaController {
 	@PatchMapping("/{idMascota}/estado")
 	public ResponseEntity<?> updateEstado(
 			@PathVariable(value = "idMascota") Integer idMascota,
-			@RequestBody Map<String, String> body) {
+			@RequestBody Map<String, Object> body) {
 		try {
-			String estado = body.get("estadoAdopcion");
-			Mascota updated = mascotaService.updateEstadoAdopcion(idMascota, estado);
+			String estado = body.get("estadoAdopcion") instanceof String s ? s : null;
+			Integer idUsuario = parseIdUsuario(body.get("idUsuario"));
+			Mascota updated = mascotaService.updateEstadoAdopcion(idMascota, estado, idUsuario);
 			return ResponseEntity.ok(updated);
+		} catch (IllegalStateException ex) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", ex.getMessage()));
 		} catch (IllegalArgumentException ex) {
 			return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
 		}
+	}
+
+	private Integer parseIdUsuario(Object value) {
+		if (value instanceof Number number) {
+			return number.intValue();
+		}
+		if (value instanceof String text && !text.isBlank()) {
+			return Integer.parseInt(text.trim());
+		}
+		return null;
 	}
 
 	@PutMapping("/{idMascota}")
